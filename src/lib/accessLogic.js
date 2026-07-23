@@ -138,6 +138,22 @@ export async function registerVisitorEntry({ plate, driverName, apartmentId, gua
   return { alertFlag, alertType }
 }
 
+// Reglas de tarifa de visitantes: primeras 2 horas gratis, luego $1.500 COP
+// por cada hora o fracción de hora adicional (si se pasa 1 minuto, se cobra
+// la hora completa).
+const FREE_MINUTES = 120
+const RATE_PER_HOUR = 1500
+
+export function calculateVisitorFee(entryTime, exitTime) {
+  const minutes = Math.round((new Date(exitTime) - new Date(entryTime)) / 60000)
+  if (minutes <= FREE_MINUTES) {
+    return { fee: 0, billableHours: 0, totalMinutes: minutes }
+  }
+  const extraMinutes = minutes - FREE_MINUTES
+  const billableHours = Math.ceil(extraMinutes / 60) // cualquier fracción cuenta como hora completa
+  return { fee: billableHours * RATE_PER_HOUR, billableHours, totalMinutes: minutes }
+}
+
 // Registra la SALIDA de un visitante (buscado por placa)
 export async function registerVisitorExit({ plate, guardId }) {
   const normalized = normalizePlate(plate)
@@ -147,13 +163,16 @@ export async function registerVisitorExit({ plate, guardId }) {
     throw new Error('No se encontró un registro de entrada abierto para esta placa.')
   }
 
+  const exitTime = new Date().toISOString()
+  const { fee, billableHours, totalMinutes } = calculateVisitorFee(openLog.entry_time, exitTime)
+
   const { error } = await supabase
     .from('access_logs')
-    .update({ exit_time: new Date().toISOString(), exit_guard_id: guardId })
+    .update({ exit_time: exitTime, exit_guard_id: guardId, fee_amount: fee })
     .eq('id', openLog.id)
 
   if (error) throw error
-  return openLog
+  return { ...openLog, exit_time: exitTime, fee, billableHours, totalMinutes }
 }
 
 // Registra un intento de escaneo de QR que no corresponde a ningún vehículo

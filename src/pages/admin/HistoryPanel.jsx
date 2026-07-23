@@ -38,6 +38,7 @@ export default function HistoryPanel() {
         entrada: new Date(r.entry_time).toLocaleString('es-CO'),
         salida: r.exit_time ? new Date(r.exit_time).toLocaleString('es-CO') : 'Aún adentro',
         apartamento_destino: r.apartments ? `${r.apartments.tower} ${r.apartments.number}` : '',
+        tarifa_cobrada: r.entry_type === 'visitor' ? `$${(r.fee_amount || 0).toLocaleString('es-CO')}` : '',
         alerta: r.alert_flag ? r.alert_type : '',
       })),
       `historial_accesos_${new Date().toISOString().slice(0, 10)}.xlsx`,
@@ -76,6 +77,7 @@ export default function HistoryPanel() {
                 <th style={styles.th}>Entrada</th>
                 <th style={styles.th}>Salida</th>
                 <th style={styles.th}>Destino</th>
+                <th style={styles.th}>Tarifa</th>
               </tr>
             </thead>
             <tbody>
@@ -86,6 +88,11 @@ export default function HistoryPanel() {
                   <td style={styles.td}>{new Date(r.entry_time).toLocaleString('es-CO')}</td>
                   <td style={styles.td}>{r.exit_time ? new Date(r.exit_time).toLocaleString('es-CO') : '—'}</td>
                   <td style={styles.td}>{r.apartments ? `${r.apartments.tower} ${r.apartments.number}` : '—'}</td>
+                  <td style={styles.td}>
+                    {r.entry_type === 'visitor' && r.exit_time
+                      ? `$${(r.fee_amount || 0).toLocaleString('es-CO')}`
+                      : '—'}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -1,6 +1,18 @@
 import { supabase } from './supabaseClient'
 import { normalizePlate } from './accessLogic'
 
+// Genera un UUID v4 sin depender de crypto.randomUUID(), que el navegador
+// solo permite en conexiones seguras (HTTPS o localhost exacto).
+// crypto.getRandomValues() sí funciona sin ese requisito, así que la usamos
+// para mantener la misma aleatoriedad segura (no es Math.random()).
+function generateUuid() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 0x0f) | 0x40 // versión 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80 // variante
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 // Procesa filas de Excel con columnas: torre, apartamento, propietario, telefono, placa, tipo_vehiculo
 // Crea (o reutiliza) el apartamento, y crea el vehículo con un qr_code único.
 // Devuelve un resumen: { created, skipped, errors }
@@ -51,7 +63,7 @@ export async function bulkImportResidents(rows) {
         continue
       }
 
-      const qrCode = crypto.randomUUID()
+      const qrCode = generateUuid()
 
       const { error: vehError } = await supabase.from('vehicles').insert({
         plate,

@@ -282,9 +282,19 @@ function VisitorPanel({ guardId, showMessage }) {
     e.preventDefault()
     setLoading(true)
     try {
-      await registerVisitorExit({ plate, guardId })
+      const result = await registerVisitorExit({ plate, guardId })
       const hora = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-      showMessage('success', `🚪 SALIDA visitante — Placa ${normalizePlate(plate)} — ${hora}`)
+      const horas = Math.floor(result.totalMinutes / 60)
+      const mins = result.totalMinutes % 60
+      const tiempoTexto = `${horas}h ${mins}min`
+      const tarifaTexto = result.fee > 0
+        ? `— Tarifa: $${result.fee.toLocaleString('es-CO')}`
+        : '— Sin costo (dentro de las 2 horas gratis)'
+      showMessage(
+        'success',
+        `🚪 SALIDA visitante — Placa ${normalizePlate(plate)} — Tiempo: ${tiempoTexto} ${tarifaTexto} — ${hora}`,
+        7000
+      )
       resetForm()
     } catch (err) {
       showMessage('error', err.message)

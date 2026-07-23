@@ -7,6 +7,7 @@ import GuardsPanel from './admin/GuardsPanel'
 import ParkingSpotsPanel from './admin/ParkingSpotsPanel'
 import AlertsPanel from './admin/AlertsPanel'
 import HistoryPanel from './admin/HistoryPanel'
+import StorageAlert from './admin/StorageAlert'
 
 const SECTIONS = [
   { id: 'occupancy', label: 'Aforo actual', component: OccupancyPanel },
@@ -45,8 +46,11 @@ export default function AdminDashboard() {
         <button onClick={logout} style={styles.logoutBtn}>Cerrar sesión</button>
       </aside>
 
-      <main style={styles.content}>
-        {ActiveComponent && <ActiveComponent />}
+      <main style={styles.mainWrapper}>
+        <StorageAlert />
+        <div style={styles.content}>
+          {ActiveComponent && <ActiveComponent />}
+        </div>
       </main>
     </div>
   )
@@ -72,4 +76,5 @@ const styles = {
     background: 'transparent', color: '#cbd5e1', fontSize: 13, cursor: 'pointer',
   },
   content: { flex: 1, padding: 28, overflowX: 'auto' },
+  mainWrapper: { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 },
 }
